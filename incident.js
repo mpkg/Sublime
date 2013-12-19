@@ -1,13 +1,12 @@
-// JScript source code
 function Form_onload() {
-    debugger
+
     if (Xrm.Page.ui.getFormType() == 1) {
         LoadSubjects();
     }
     else {
         LoadSubjects();
         if (Xrm.Page.getAttribute("subjectid").getValue() != null) {
-            Xrm.Page.getAttribute("new_subject").setValue((Xrm.Page.getAttribute("subjectid").getValue()[0]).id);
+            $('#new_subject').val(Xrm.Page.getAttribute("subjectid").getValue()[0].id.replace('{', '').replace('}', '').toLowerCase());
         }
     }
 }
@@ -18,17 +17,6 @@ function LoadSubjects() {
     return true;
 }
 
-
-
-//Remove all options from owner user dropdown.
-function RemoveAllOptions() {
-    var optionsLength = Xrm.Page.getAttribute("new_subject").getOptions().length;
-    for (var i = optionsLength; i > 0; i--) {
-        Xrm.Page.getControl('new_subject').removeOption(i);
-    }
-}
-
-
 function retrieveRecord() {
     // Get Server URL
     var serverUrl = Xrm.Page.context.getServerUrl();
@@ -36,6 +24,7 @@ function retrieveRecord() {
     var ODATA_ENDPOINT = "/XRMServices/2011/OrganizationData.svc";
     //Asynchronous AJAX function to Retrieve a CRM record using OData
     $.ajax({
+        async: false,
         type: "GET",
         contentType: "application/json; charset=utf-8",
         datatype: "json",
@@ -66,33 +55,19 @@ function readRecord(data, textStatus, XmlHttpRequest) {
 
 
 function AddOptionSet(value, text) {
-    var myNewOption = document.createElement("new_subject");
-    myNewOption.value = value;
 
-    myNewOption.text = text;
-    Xrm.Page.getControl("new_subject").addOption(myNewOption);
+    $('#new_subject').append('<option value=' + value + '>' + text + '</option>');
 }
 
-function Form_onsave() {
-    debugger
-    if (Xrm.Page.getAttribute("new_subject").getValue() == "" || Xrm.Page.getAttribute("new_subject").getValue() == null) {
+function Form_onsave(executionObj) {
+
+    if (Xrm.Page.getAttribute("subjectid").getValue() == "" || Xrm.Page.getAttribute("subjectid").getValue() == null) {
         alert('You must provide a value for Requestor Type.');
-        // Cancel the save operation.
-        event.returnValue = false;
+        // Cancel the save operation.        
         Xrm.Page.getControl("new_subject").setFocus(true);
-        return false;
+        executionObj.getEventArgs().preventDefault();
     }
-    RemoveAllOptions();
-    if (Xrm.Page.data.entity.getIsDirty() != true) {
-        if (event.Mode == 1) {
-            LoadSubjects();
-            if (Xrm.Page.getAttribute("subjectid").getValue() != null) {
-                Xrm.Page.getAttribute("new_subject").setValue((Xrm.Page.getAttribute("subjectid").getValue()[0]).id);
-            }
-            event.returnValue = false;
-            return false;
-        }
-    }
+    //$('#new_subject').html('');    
 }
 
 
@@ -113,9 +88,9 @@ function SetOwnerUser(title, subjectId) {
 }
 
 function new_subject_onchange() {
-    debugger
-    if (Xrm.Page.getAttribute("new_subject").getValue() != null) {
-        SetOwnerUser(Xrm.Page.getAttribute("new_subject").getSelectedOption().text, Xrm.Page.getAttribute("new_subject").getValue());
+
+    if ($('#new_subject').val() != '') {
+        SetOwnerUser($('#new_subject option:selected').text(), $('#new_subject').val());
     }
     else {
         Xrm.Page.getAttribute("subjectid").setValue(null);
